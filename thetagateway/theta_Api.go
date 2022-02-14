@@ -15,6 +15,8 @@ import (
 
 const TransactionCollection = "transactions"
 const UserCollection = "thetaUsers"
+const CustomerCollection = "customers"
+const AuditsCollection = "audits"
 
 //TODO:ENTER DATABASE NAME
 const DatabaseName = "thetadb"
@@ -46,15 +48,21 @@ func main() {
 	}
 
 	// setup contollers
-	authContoller := &controllers.AuthController{
-		*thetaDB.Collection(UserCollection),
+	userAuthContoller := &controllers.UserAuthController{
+		thetaDB.Collection(UserCollection),
 	}
 
 	userContoller := &controllers.UserController{
-		*thetaDB.Collection(UserCollection),
+		thetaDB.Collection(UserCollection),
+	}
+	customerAuthController := &controllers.CustomerAuthController{
+		thetaDB.Collection(CustomerCollection),
+	}
+	customerController := &controllers.CustomerController{
+		thetaDB.Collection(CustomerCollection),
 	}
 	transactionContoller := &controllers.TransactionController{
-		*thetaDB.Collection(TransactionCollection),
+		thetaDB.Collection(TransactionCollection),
 	}
 
 	// start server
@@ -64,8 +72,10 @@ func main() {
 	server.GET("/api", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})
 	})
-	routes.AuthRoutes(server, authContoller)
+	routes.AuthUserRoutes(server, userAuthContoller)
 	routes.UserRoutes(server, userContoller)
+	routes.AuthCustomerRoutes(server, customerAuthController)
+	routes.CustomerRoutes(server, customerController)
 	routes.TransactionRoutes(server, transactionContoller)
 	server.Run(":" + port)
 	defer client.Disconnect(ctx)

@@ -7,7 +7,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuhthenticateUser() gin.HandlerFunc {
+func AuhthenticateSystemUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		//verify username and password
+
+		//verify role
+
+		//verify request authorization
+
+		// 	c.Set("phoneNumber", claims.PhoneNumber)
+		// 	c.Set("userName", claims.FullName)
+		// 	c.Set("uid", claims.Uid)
+		// 	c.Set("role", claims.Role)
+		// 	c.Next()
+	}
+
+}
+
+func AuhthenticateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		clientToken := c.Request.Header.Get("token")
 		if clientToken == "" {
@@ -23,11 +40,10 @@ func AuhthenticateUser() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("email", claims.PhoneNumber)
+		c.Set("email", claims.Email)
 		c.Set("fullName", claims.FullName)
 		c.Set("uid", claims.Uid)
-		c.Set("role", claims.Role)
+
 		c.Next()
 	}
-
 }

@@ -15,7 +15,7 @@ type TransactionsInterfaces interface {
 }
 
 type TransactionController struct {
-	mongo.Collection
+	*mongo.Collection
 }
 
 func (controller *TransactionController) TopUp() gin.HandlerFunc {

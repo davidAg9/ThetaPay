@@ -13,7 +13,7 @@ import (
 // GetTransactions() gin.HandlerFunc
 // AcceptPayment() gin.HandlerFunc
 func TransactionRoutes(incomingRoutes *gin.Engine, transactionController *controllers.TransactionController) {
-	incomingRoutes.Use(middlewares.AuhthenticateUser())
+	incomingRoutes.Use(middlewares.AuhthenticateCustomer())
 	incomingRoutes.POST("/transactions/users/topup", transactionController.TopUp())
 	incomingRoutes.GET("transactions/balance", transactionController.CheckBalance())
 	incomingRoutes.POST("/transactions/theta2theta", transactionController.ThetaTransfer())

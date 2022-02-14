@@ -15,57 +15,58 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type AuthController struct {
-	mongo.Collection
+type CustomerAuthController struct {
+	*mongo.Collection
 }
 
-func (controller *AuthController) Login() gin.HandlerFunc {
+func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		var user models.User
-		var foundUser models.User
+		var customer models.Customer
+		var foundCustomer models.Customer
 		defer cancel()
-		if err := c.BindJSON(&user); err != nil {
+		if err := c.BindJSON(&customer); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		log.Print(user)
-		err := controller.FindOne(ctx, bson.M{"phoneNumber": user.PhoneNumber}).Decode(&foundUser)
+		log.Print(customer)
+		err := controller.FindOne(ctx, bson.M{"email": customer.Email}).Decode(&foundCustomer)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "phoneNumber or password is incorrect"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "email or password is incorrect"})
 			return
 		}
 
-		passwordIsValid, msg := utilities.VerifyPassword(*user.Password, *foundUser.Password)
+		passwordIsValid, msg := utilities.VerifyPassword(*customer.Password, *foundCustomer.Password)
 
 		if !passwordIsValid {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
 
-		if foundUser.PhoneNumber == nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
+		if foundCustomer.Email == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Customer not found"})
 		}
 		//TODO:FIX GENERATE ALL TOKENS
 
-		token, _ := utilities.GenerateAllTokens(*foundUser.PhoneNumber, *foundUser.FullName, *foundUser.Role, foundUser.ID.String())
-		updateAllTokens(token, foundUser.ID.String(), controller)
-		err = controller.FindOne(ctx, bson.M{"userId": foundUser.ID}).Decode(&foundUser)
+		token, _ := utilities.GenerateAllTokens(*foundCustomer.Email, *foundCustomer.FullName, foundCustomer.ID.String())
+		updateAllTokens(token, foundCustomer.ID.String(), controller)
+		err = controller.FindOne(ctx, bson.M{"_id": foundCustomer.ID}).Decode(&foundCustomer)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, foundUser)
+		c.JSON(http.StatusOK, foundCustomer)
 	}
 }
 
-func (controller *AuthController) SignUp() gin.HandlerFunc {
+func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {}
 }
-func updateAllTokens(signedToken string, userId string, userCollection *AuthController) {
+
+func updateAllTokens(signedToken string, CustomerId string, CustomerCollection *CustomerAuthController) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
 	var updateObj primitive.D
@@ -76,12 +77,12 @@ func updateAllTokens(signedToken string, userId string, userCollection *AuthCont
 	updateObj = append(updateObj, bson.E{"updatedAt", Updated_at})
 
 	upsert := false
-	filter := bson.M{"_id": userId}
+	filter := bson.M{"_id": CustomerId}
 	optns := options.UpdateOptions{
 		Upsert: &upsert,
 	}
 
-	_, err := userCollection.UpdateOne(
+	_, err := CustomerCollection.UpdateOne(
 		ctx,
 		filter,
 		bson.D{

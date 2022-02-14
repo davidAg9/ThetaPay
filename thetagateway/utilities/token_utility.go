@@ -6,28 +6,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/davidAg9/thetagateway/models"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type ThetaCredentials struct {
-	PhoneNumber *string
-	FullName    *string
-	Uid         *string
-	Role        *models.Role
+	Email    *string
+	FullName *string
+	Uid      *string
 	jwt.StandardClaims
 }
 
-// var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
-//TODO:SET SECRETE KEY
 var SECRET_KEY string = os.Getenv("SECRET_KEY")
 
-func GenerateAllTokens(phoneNumber string, fullName string, role models.Role, uid string) (signedToken string, err error) {
+func GenerateAllTokens(email string, fullName string, uid string) (signedToken string, err error) {
 	claims := &ThetaCredentials{
-		PhoneNumber: &phoneNumber,
-		FullName:    &fullName,
-		Uid:         &uid,
-		Role:        &role,
+		Email:    &email,
+		FullName: &fullName,
+		Uid:      &uid,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
 		},

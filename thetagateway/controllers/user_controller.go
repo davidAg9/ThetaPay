@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -15,10 +14,10 @@ import (
 )
 
 type UserController struct {
-	mongo.Collection
+	*mongo.Collection
 }
 
-func (userController *UserController) GetUser() gin.HandlerFunc {
+func (userController *UserController) GetSystemUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId := c.Param("userId")
 		if userId != "" {
@@ -32,7 +31,7 @@ func (userController *UserController) GetUser() gin.HandlerFunc {
 			}
 			c.JSON(http.StatusOK, user)
 		} else {
-			err := errors.New("Invalid user identity")
+			err := errors.New("invalid user identity")
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -40,7 +39,7 @@ func (userController *UserController) GetUser() gin.HandlerFunc {
 	}
 }
 
-func (userController *UserController) UpdateUser() gin.HandlerFunc {
+func (userController *UserController) UpdateSystemUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
@@ -56,8 +55,8 @@ func (userController *UserController) UpdateUser() gin.HandlerFunc {
 		}
 
 		var updateObj primitive.D
-		if user.FullName != nil {
-			updateObj = append(updateObj, bson.E{"fullName", user.FullName})
+		if user.UserName != nil {
+			updateObj = append(updateObj, bson.E{"userName", user.UserName})
 		}
 		if user.PhoneNumber != nil {
 			updateObj = append(updateObj, bson.E{"phoneNumber", user.PhoneNumber})
@@ -79,7 +78,7 @@ func (userController *UserController) UpdateUser() gin.HandlerFunc {
 		)
 
 		if updateErr != nil {
-			msg := fmt.Sprintf("Update failed")
+			msg := "Update failed"
 			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
