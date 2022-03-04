@@ -6,29 +6,30 @@ import (
 	"os"
 	"time"
 
+	"github.com/davidAg9/thetagateway/models"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-type ThetaCredentials struct {
-	Email    *string
-	FullName *string
+type ThetaUserCredentials struct {
+	Role     *models.Role
+	UserName *string
 	Uid      *string
+	jwt.StandardClaims
+}
+
+type ThetaCustomerCredentials struct {
+	UserName *string
+	Uid      *string
+	FullName *string
 	jwt.StandardClaims
 }
 
 var SECRET_KEY string = os.Getenv("SECRET_KEY")
 
-func GenerateAllTokens(email string, fullName string, uid string) (signedToken string, err error) {
-	claims := &ThetaCredentials{
-		Email:    &email,
-		FullName: &fullName,
-		Uid:      &uid,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
-		},
-	}
+///Generate customer tokens to allow customer to get transactions , view and deposit into his account
+func GenerateCustomerTokens(credentials ThetaCustomerCredentials) (signedToken string, err error) {
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, credentials).SignedString([]byte(SECRET_KEY))
 
 	if err != nil {
 		log.Panic(err)
@@ -38,10 +39,10 @@ func GenerateAllTokens(email string, fullName string, uid string) (signedToken s
 	return token, err
 }
 
-func ValidateToken(signedToken string) (claims *ThetaCredentials, msg string) {
+func ValidateCustomerToken(signedToken string) (claims *ThetaCustomerCredentials, msg string) {
 	token, err := jwt.ParseWithClaims(
 		signedToken,
-		&ThetaCredentials{},
+		&ThetaCustomerCredentials{},
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(SECRET_KEY), nil
 		},
@@ -52,7 +53,7 @@ func ValidateToken(signedToken string) (claims *ThetaCredentials, msg string) {
 		return
 	}
 
-	claims, ok := token.Claims.(*ThetaCredentials)
+	claims, ok := token.Claims.(*ThetaCustomerCredentials)
 	if !ok {
 		msg = fmt.Sprintf("the token is invalid, Reason %s", err.Error())
 		return
@@ -62,5 +63,85 @@ func ValidateToken(signedToken string) (claims *ThetaCredentials, msg string) {
 		msg = fmt.Sprintf("token is expired %s", err.Error())
 		return
 	}
+	return claims, msg
+}
+
+func GenerateUserTokens(credentials *ThetaUserCredentials) (signedToken string, err error) {
+
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, credentials).SignedString([]byte(SECRET_KEY))
+
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+
+	return token, err
+}
+
+func ValidateUserToken(signedToken string) (claims *ThetaUserCredentials, msg string) {
+	token, err := jwt.ParseWithClaims(
+		signedToken,
+		&ThetaUserCredentials{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(SECRET_KEY), nil
+		},
+	)
+
+	if err != nil {
+		msg = fmt.Sprintf("the token is invalid ,Reason: %s", err.Error())
+		return
+	}
+
+	claims, ok := token.Claims.(*ThetaUserCredentials)
+	if !ok {
+		msg = fmt.Sprintf("the token is invalid, Reason %s", err.Error())
+		return
+	}
+
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		msg = fmt.Sprintf("token is expired %s", err.Error())
+		return
+	}
+	return claims, msg
+}
+
+func GenerateApiKey(email *string) (signedToken string, err error) {
+	//TODO:PROPER API KEY GENERATION
+	// var dateCreated = time.Now().Local().Unix()
+	creds := jwt.StandardClaims{
+
+		Issuer: *email,
+	}
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, creds).SignedString([]byte(SECRET_KEY))
+
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+
+	return token, err
+}
+
+func ValidateAPIToken(key string) (claims *jwt.StandardClaims, msg string) {
+	token, err := jwt.ParseWithClaims(
+		key,
+		&jwt.StandardClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(SECRET_KEY), nil
+		},
+	)
+
+	if err != nil {
+		msg = fmt.Sprintf("the api key is invalid ,Reason: %s", err.Error())
+		return
+	}
+
+	claims, ok := token.Claims.(*jwt.StandardClaims)
+	if !ok {
+		msg = fmt.Sprintf("the key is invalid, Reason %s", err.Error())
+		return
+	}
+	//TODO:PROPER API KEY VALIDATION
+
 	return claims, msg
 }

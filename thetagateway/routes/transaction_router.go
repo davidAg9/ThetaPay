@@ -16,8 +16,9 @@ func TransactionRoutes(incomingRoutes *gin.Engine, transactionController *contro
 	incomingRoutes.Use(middlewares.AuhthenticateCustomer())
 	incomingRoutes.POST("/transactions/users/topup", transactionController.TopUp())
 	incomingRoutes.GET("transactions/balance", transactionController.CheckBalance())
+	incomingRoutes.GET("/transactions/:accountId", transactionController.GetTransactions())
+	incomingRoutes.Use(middlewares.VerifyApiKey())
 	incomingRoutes.POST("/transactions/theta2theta", transactionController.ThetaTransfer())
 	incomingRoutes.POST("/transactions/pay", transactionController.AcceptPayment())
 	incomingRoutes.POST("transactions/refund/:txnId", transactionController.Refund())
-	incomingRoutes.GET("/transactions/:accountId", transactionController.GetTransactions())
 }
