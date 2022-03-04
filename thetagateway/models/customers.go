@@ -14,7 +14,7 @@ const (
 )
 
 type Customer struct {
-	ID           primitive.ObjectID `bson:"_id"`
+	ID           primitive.ObjectID `bson:"_id", json:"-,omitempty"`
 	Username     *string            `bson:"userName,omitempty" json:"userName,omitempty"`
 	FullName     *string            `bson:"fullName,omitempty" json:"fullName,omitempty"  validate:"min=3, max=150"`
 	Email        *string            `bson:"email" json:"email" validate:"email,required"`

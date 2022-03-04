@@ -74,7 +74,7 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 
 func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 200*time.Second)
 		var customer models.Customer
 		defer cancel()
 		if err := c.BindJSON(&customer); err != nil {
@@ -83,9 +83,11 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 		}
 
 		count, err := controller.CountDocuments(ctx, bson.M{"email": customer.Email})
+
 		if err != nil {
-			log.Panic(err)
+
 			c.JSON(http.StatusInternalServerError, "Error occured while signing in")
+			log.Panic(err.Error())
 			return
 		}
 		if count > 0 {
@@ -113,7 +115,7 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, "Could not create user")
 			return
 		}
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, result.InsertedID)
 
 	}
 }

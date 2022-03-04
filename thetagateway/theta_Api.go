@@ -11,6 +11,7 @@ import (
 	"github.com/davidAg9/thetagateway/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const TransactionCollection = "transactions"
@@ -34,15 +35,18 @@ func main() {
 	if port == "" {
 		port = "8000"
 	}
-
+	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().ApplyURI(mongoUrl).SetServerAPIOptions(serverAPIOptions)
 	// connect to database
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+
 	defer cancel()
-	client, err := databases.ConnnectDatabase(ctx, &mongoUrl)
+	client, err := databases.ConnnectDatabase(ctx, clientOptions)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer client.Disconnect(ctx)
 	thetaDB := databases.ThetaDatabase{
 		client.Database(DatabaseName),
 	}
@@ -72,11 +76,11 @@ func main() {
 	server.GET("/api", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})
 	})
-	routes.AuthUserRoutes(server, userAuthContoller)
-	routes.UserRoutes(server, userContoller)
 	routes.AuthCustomerRoutes(server, customerAuthController)
 	routes.CustomerRoutes(server, customerController)
+	routes.AuthUserRoutes(server, userAuthContoller)
+	routes.UserRoutes(server, userContoller)
 	routes.TransactionRoutes(server, transactionContoller)
 	server.Run(":" + port)
-	defer client.Disconnect(ctx)
+
 }
