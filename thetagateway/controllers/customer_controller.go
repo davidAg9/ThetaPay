@@ -19,7 +19,7 @@ type CustomerController struct {
 func (customerController *CustomerController) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user models.Customer
-		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 		uid := c.Keys["uid"]
 
@@ -49,7 +49,7 @@ func (customerController *CustomerController) UpdateCustomer() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid fields"})
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 		uid := c.Keys["uid"]
 		if uid == nil && uid == "" {

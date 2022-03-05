@@ -87,7 +87,7 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 		if err != nil {
 
 			c.JSON(http.StatusInternalServerError, "Error occured while signing in")
-			log.Fatal(err.Error())
+			log.Panic(err.Error())
 			return
 		}
 		if count > 0 {
@@ -108,13 +108,22 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 		customer.Verified = false
 		//Generate account information
 		customer.AccountInfo, err = GenerateAccountInformation(*customer.AccountInfo.AccountType)
+		if err != nil {
+			log.Panic(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
+			return
+		}
 		uid := customer.ID.String()
 		creds := utilities.ThetaCustomerCredentials{
 			Uid:      &uid,
 			FullName: customer.FullName,
 		}
-		token, _ := utilities.GenerateCustomerTokens(creds)
-
+		token, err := utilities.GenerateCustomerTokens(creds)
+		if err != nil {
+			log.Panic(err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
+			return
+		}
 		customer.Token = &token
 		if err != nil {
 			c.String(http.StatusInternalServerError, "Could not create user")

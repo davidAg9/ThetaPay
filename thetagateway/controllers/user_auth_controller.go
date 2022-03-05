@@ -19,7 +19,7 @@ type UserAuthController struct {
 
 func (controller *UserAuthController) LoginUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
 		var user models.User
 		var foundUser models.User
 		defer cancel()
