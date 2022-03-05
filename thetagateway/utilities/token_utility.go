@@ -18,7 +18,6 @@ type ThetaUserCredentials struct {
 }
 
 type ThetaCustomerCredentials struct {
-	UserName *string
 	Uid      *string
 	FullName *string
 	jwt.StandardClaims
@@ -29,6 +28,7 @@ var SECRET_KEY string = os.Getenv("SECRET_KEY")
 ///Generate customer tokens to allow customer to get transactions , view and deposit into his account
 func GenerateCustomerTokens(credentials ThetaCustomerCredentials) (signedToken string, err error) {
 
+	credentials.ExpiresAt = time.Now().Local().Unix()
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, credentials).SignedString([]byte(SECRET_KEY))
 
 	if err != nil {

@@ -50,7 +50,7 @@ func (controller *TransactionController) CheckBalance() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "No user id found"})
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 		//get user from database
 		var customer models.Customer
@@ -86,7 +86,7 @@ func (controller *TransactionController) GetTransactions() gin.HandlerFunc {
 		}
 		filter := bson.M{"accountId": accid}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 		//get user from database
 		var customer models.Customer

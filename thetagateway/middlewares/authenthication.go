@@ -53,7 +53,6 @@ func AuhthenticateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("username", claims.UserName)
 		c.Set("fullName", claims.FullName)
 		c.Set("uid", claims.Uid)
 

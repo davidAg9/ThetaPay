@@ -8,7 +8,6 @@ import (
 
 	"github.com/davidAg9/thetagateway/controllers"
 	"github.com/davidAg9/thetagateway/databases"
-	docs "github.com/davidAg9/thetagateway/docs"
 	"github.com/davidAg9/thetagateway/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -55,13 +54,11 @@ func main() {
 		port = "8000"
 	}
 
-	docs.SwaggerInfo.Host = "localhost:" + port
-	docs.SwaggerInfo.Schemes = []string{"http"}
-
-	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().ApplyURI(mongoUrl).SetServerAPIOptions(serverAPIOptions)
+	// serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().ApplyURI(mongoUrl)
+	// .SetServerAPIOptions(serverAPIOptions)
 	// connect to database
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
 	defer cancel()
 	client, err := databases.ConnnectDatabase(ctx, clientOptions)

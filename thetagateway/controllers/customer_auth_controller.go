@@ -52,7 +52,6 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 
 		foundId := foundCustomer.ID.String()
 		creds := &utilities.ThetaCustomerCredentials{
-			UserName: foundCustomer.Username,
 			Uid:      &foundId,
 			FullName: foundCustomer.FullName,
 			StandardClaims: jwt.StandardClaims{
@@ -61,6 +60,7 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 		}
 
 		token, _ := utilities.GenerateCustomerTokens(*creds)
+
 		updateAllTokens(token, foundCustomer.ID.String(), controller)
 		err = controller.FindOne(ctx, bson.M{"_id": foundCustomer.ID}).Decode(&foundCustomer)
 
@@ -74,7 +74,7 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 
 func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 200*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 160*time.Second)
 		var customer models.Customer
 		defer cancel()
 		if err := c.BindJSON(&customer); err != nil {
@@ -87,7 +87,7 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 		if err != nil {
 
 			c.JSON(http.StatusInternalServerError, "Error occured while signing in")
-			log.Panic(err.Error())
+			log.Fatal(err.Error())
 			return
 		}
 		if count > 0 {
@@ -104,37 +104,46 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 		customer.ID = primitive.NewObjectID()
 		customer.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 		customer.Updated_at = customer.Created_at
+		customer.Deleted_at = nil
+		customer.Verified = false
 		//Generate account information
-		customer.AccountInfo, err = GenerateAccountInformation()
+		customer.AccountInfo, err = GenerateAccountInformation(*customer.AccountInfo.AccountType)
+		uid := customer.ID.String()
+		creds := utilities.ThetaCustomerCredentials{
+			Uid:      &uid,
+			FullName: customer.FullName,
+		}
+		token, _ := utilities.GenerateCustomerTokens(creds)
+
+		customer.Token = &token
 		if err != nil {
 			c.String(http.StatusInternalServerError, "Could not create user")
 			return
 		}
-		result, err := controller.InsertOne(ctx, customer)
+		_, err = controller.InsertOne(ctx, customer)
 		if err != nil {
 			c.String(http.StatusInternalServerError, "Could not create user")
 			return
 		}
-		c.JSON(http.StatusOK, result.InsertedID)
+
+		customer.Password = nil
+		customer.API_KEY = nil
+		c.JSON(http.StatusOK, gin.H{"token": customer.Token, "user": customer})
 
 	}
 }
 
-func GenerateAccountInformation() (*models.AccountInfo, error) {
+func GenerateAccountInformation(accounType models.AccountType) (*models.AccountInfo, error) {
 	var account models.AccountInfo
 	accNo, err := utilities.GenerateAccountNumber()
 	if err != nil {
 		return nil, err
 	}
 
-	pin, err := utilities.GenerateTempPin()
-	if err != nil {
-		return nil, err
-	}
 	balance := 0.0
 	account.AccountID = &accNo
-	account.PinCode = pin
 	account.Balance = &balance
+	account.AccountType = &accounType
 	return &account, nil
 }
 
@@ -143,10 +152,10 @@ func updateAllTokens(signedToken string, CustomerId string, CustomerCollection *
 
 	var updateObj primitive.D
 
-	updateObj = append(updateObj, bson.E{"token", signedToken})
+	updateObj = append(updateObj, bson.E{Key: "token", Value: signedToken})
 
 	Updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	updateObj = append(updateObj, bson.E{"updatedAt", Updated_at})
+	updateObj = append(updateObj, bson.E{Key: "updatedAt", Value: Updated_at})
 
 	upsert := false
 	filter := bson.M{"_id": CustomerId}
