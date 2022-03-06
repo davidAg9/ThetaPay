@@ -22,7 +22,7 @@ type CustomerAuthController struct {
 
 func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 		var customer models.Customer
 		var foundCustomer models.Customer
 		defer cancel()
@@ -31,11 +31,10 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 			return
 		}
 
-		log.Print(customer)
 		err := controller.FindOne(ctx, bson.M{"email": customer.Email}).Decode(&foundCustomer)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "email or password is incorrect"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "email might be incorrect"})
 			return
 		}
 
@@ -48,9 +47,10 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 
 		if foundCustomer.Email == nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Customer not found"})
+			return
 		}
 
-		foundId := foundCustomer.ID.String()
+		foundId := foundCustomer.ID.Hex()
 		creds := &utilities.ThetaCustomerCredentials{
 			Uid:      &foundId,
 			FullName: foundCustomer.FullName,
@@ -59,22 +59,32 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 			},
 		}
 
-		token, _ := utilities.GenerateCustomerTokens(*creds)
-
-		updateAllTokens(token, foundCustomer.ID.String(), controller)
-		err = controller.FindOne(ctx, bson.M{"_id": foundCustomer.ID}).Decode(&foundCustomer)
-
+		token, err := utilities.GenerateCustomerTokens(*creds)
+		log.Println(token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, foundCustomer)
+		err = updateAllTokens(token, foundCustomer.ID, controller)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		err = controller.FindOne(ctx, bson.M{"_id": foundCustomer.ID}).Decode(&foundCustomer)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		foundCustomer.Password = nil
+		log.Println(foundCustomer)
+		c.JSON(http.StatusOK, gin.H{"token": foundCustomer.Token, "user": foundCustomer})
 	}
 }
 
 func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 160*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
 		var customer models.Customer
 		defer cancel()
 		if err := c.BindJSON(&customer); err != nil {
@@ -113,10 +123,13 @@ func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
 			return
 		}
-		uid := customer.ID.String()
+		uid := customer.ID.Hex()
 		creds := utilities.ThetaCustomerCredentials{
 			Uid:      &uid,
 			FullName: customer.FullName,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
+			},
 		}
 		token, err := utilities.GenerateCustomerTokens(creds)
 		if err != nil {
@@ -156,15 +169,16 @@ func GenerateAccountInformation(accounType models.AccountType) (*models.AccountI
 	return &account, nil
 }
 
-func updateAllTokens(signedToken string, CustomerId string, CustomerCollection *CustomerAuthController) {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+func updateAllTokens(signedToken string, CustomerId primitive.ObjectID, CustomerCollection *CustomerAuthController) error {
+	var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	var updateObj primitive.D
 
 	updateObj = append(updateObj, bson.E{Key: "token", Value: signedToken})
 
-	Updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	updateObj = append(updateObj, bson.E{Key: "updatedAt", Value: Updated_at})
+	updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	updateObj = append(updateObj, bson.E{Key: "updatedAt", Value: updated_at})
 
 	upsert := false
 	filter := bson.M{"_id": CustomerId}
@@ -176,16 +190,14 @@ func updateAllTokens(signedToken string, CustomerId string, CustomerCollection *
 		ctx,
 		filter,
 		bson.D{
-			{"$set", updateObj},
+			{Key: "$set", Value: updateObj},
 		},
 		&optns,
 	)
 
-	defer cancel()
-
 	if err != nil {
 		log.Panic(err)
-		return
+		return err
 	}
-
+	return nil
 }

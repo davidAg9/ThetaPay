@@ -10,4 +10,5 @@ func CustomerRoutes(incomingRoutes *gin.Engine, controller *controllers.Customer
 	incomingRoutes.Use(middlewares.AuhthenticateCustomer())
 	incomingRoutes.GET("/customer", controller.GetCustomer())
 	incomingRoutes.PUT("/customer/update", controller.UpdateCustomer())
+	incomingRoutes.GET("/customer/createApiKey", controller.CreateNewApiKey())
 }

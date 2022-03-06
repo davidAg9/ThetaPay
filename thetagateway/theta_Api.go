@@ -103,7 +103,7 @@ func main() {
 	routes.CustomerRoutes(server, customerController)
 	routes.AuthUserRoutes(server, userAuthContoller)
 	routes.UserRoutes(server, userContoller)
-	routes.TransactionRoutes(server, transactionContoller)
+	routes.TransactionRoutes(server, transactionContoller, customerController)
 	server.Run(":" + port)
 
 }

@@ -2,12 +2,15 @@ package controllers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/davidAg9/thetagateway/models"
+	"github.com/davidAg9/thetagateway/utilities"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -19,11 +22,11 @@ type CustomerController struct {
 func (customerController *CustomerController) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user models.Customer
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		uid := c.Keys["uid"]
+		uid := c.MustGet("uid").(string)
 
-		if uid == nil && uid == "" {
+		if uid == "" {
 			c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "No user id found"})
 			return
 		}
@@ -49,10 +52,10 @@ func (customerController *CustomerController) UpdateCustomer() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid fields"})
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		uid := c.Keys["uid"]
-		if uid == nil && uid == "" {
+		uid := c.MustGet("uid").(string)
+		if uid == "" {
 			c.AbortWithStatusJSON(http.StatusBadGateway, gin.H{"error": "No user id found"})
 			return
 		}
@@ -73,5 +76,59 @@ func (customerController *CustomerController) UpdateCustomer() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusAccepted, user)
+	}
+
+}
+
+func (customerController *CustomerController) CreateNewApiKey() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := c.MustGet("uid").(string)
+
+		word, err := utilities.GenerateRandomString()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create key"})
+			log.Panic(err.Error())
+			return
+		}
+		hash, secret, err := utilities.GenerateApiKey(*word)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create key"})
+			log.Panic(err.Error())
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		updateTime, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+
+		obj, err := primitive.ObjectIDFromHex(uid)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create key"})
+			log.Panic(err)
+			return
+		}
+		filter := bson.M{"_id": obj}
+		upsert := false
+		opts := options.UpdateOptions{
+			Upsert: &upsert,
+		}
+		var updateObj bson.D = bson.D{
+			{
+				Key: "$set", Value: bson.D{
+					{Key: "updatedAt", Value: updateTime},
+					{Key: "secretKey", Value: secret},
+				},
+			},
+		}
+
+		_, err = customerController.UpdateOne(ctx, filter, updateObj, &opts)
+		if err != nil {
+
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create key"})
+			log.Panic(err.Error())
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"key": hash})
 	}
 }

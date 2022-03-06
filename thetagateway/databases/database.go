@@ -17,9 +17,12 @@ type ThetaDatabase struct {
 	*mongo.Database
 }
 
+var ThetaClient mongo.Client
+
 func ConnnectDatabase(ctx context.Context, opts *options.ClientOptions) (*mongo.Client, error) {
 
 	client, err := mongo.Connect(ctx, opts)
+	ThetaClient = *client
 	if err != nil {
 		return nil, err
 	}

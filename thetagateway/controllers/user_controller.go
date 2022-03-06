@@ -56,10 +56,10 @@ func (userController *UserController) UpdateSystemUser() gin.HandlerFunc {
 
 		var updateObj primitive.D
 		if user.UserName != nil {
-			updateObj = append(updateObj, bson.E{"userName", user.UserName})
+			updateObj = append(updateObj, bson.E{Key: "userName", Value: user.UserName})
 		}
 		if user.PhoneNumber != nil {
-			updateObj = append(updateObj, bson.E{"phoneNumber", user.PhoneNumber})
+			updateObj = append(updateObj, bson.E{Key: "phoneNumber", Value: user.PhoneNumber})
 		}
 
 		if updateObj == nil {
@@ -67,13 +67,13 @@ func (userController *UserController) UpdateSystemUser() gin.HandlerFunc {
 			return
 		}
 		Updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-		updateObj = append(updateObj, bson.E{"updatedAt", Updated_at})
+		updateObj = append(updateObj, bson.E{Key: "updatedAt", Value: Updated_at})
 
 		_, updateErr := userController.UpdateOne(
 			ctx,
 			filter,
 			bson.D{
-				{"$set", updateObj},
+				{Key: "$set", Value: updateObj},
 			},
 		)
 

@@ -1,9 +1,12 @@
 package utilities
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"log"
+	mRand "math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/davidAg9/thetagateway/models"
@@ -28,7 +31,6 @@ var SECRET_KEY string = os.Getenv("SECRET_KEY")
 ///Generate customer tokens to allow customer to get transactions , view and deposit into his account
 func GenerateCustomerTokens(credentials ThetaCustomerCredentials) (signedToken string, err error) {
 
-	credentials.ExpiresAt = time.Now().Local().Unix()
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, credentials).SignedString([]byte(SECRET_KEY))
 
 	if err != nil {
@@ -105,43 +107,51 @@ func ValidateUserToken(signedToken string) (claims *ThetaUserCredentials, msg st
 	return claims, msg
 }
 
-func GenerateApiKey(email *string) (signedToken string, err error) {
-	//TODO:PROPER API KEY GENERATION
-	// var dateCreated = time.Now().Local().Unix()
-	creds := jwt.StandardClaims{
-
-		Issuer: *email,
-	}
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, creds).SignedString([]byte(SECRET_KEY))
-
+func GenerateApiKey(word string) (hash *string, key *string, err error) {
+	hasher := sha256.New()
+	_, err = hasher.Write([]byte(word))
 	if err != nil {
-		log.Panic(err)
-		return
+		return nil, nil, err
 	}
-
-	return token, err
+	data := hasher.Sum(nil)
+	hashWord := fmt.Sprintf("%x", data)
+	return &hashWord, &word, nil
 }
 
-func ValidateAPIToken(key string) (claims *jwt.StandardClaims, msg string) {
-	token, err := jwt.ParseWithClaims(
-		key,
-		&jwt.StandardClaims{},
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte(SECRET_KEY), nil
-		},
-	)
+func GenerateRandomString() (newWord *string, err error) {
+	mRand.Seed(time.Now().Unix())
 
+	charSet := "abcdedfghijklmnopqrstABCDEFGHIJKLMNOP"
+	length := 32
+	var output strings.Builder
+	for i := 0; i < length; i++ {
+		random := mRand.Intn(len(charSet))
+		randomChar := charSet[random]
+		_, err := output.WriteString(string(randomChar))
+		if err != nil {
+			return nil, err
+		}
+
+	}
+	word := output.String()
+	return &word, nil
+
+}
+
+func ValidateAPIToken(key *string, secret *string) (valid bool, err error) {
+	hasher := sha256.New()
+	_, err = hasher.Write([]byte(*secret))
 	if err != nil {
-		msg = fmt.Sprintf("the api key is invalid ,Reason: %s", err.Error())
-		return
+		return false, err
+	}
+	sum := hasher.Sum(nil)
+
+	hash := fmt.Sprintf("%x", sum)
+
+	if *key == hash {
+		return true, nil
 	}
 
-	claims, ok := token.Claims.(*jwt.StandardClaims)
-	if !ok {
-		msg = fmt.Sprintf("the key is invalid, Reason %s", err.Error())
-		return
-	}
-	//TODO:PROPER API KEY VALIDATION
+	return false, nil
 
-	return claims, msg
 }
