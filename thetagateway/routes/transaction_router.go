@@ -13,13 +13,9 @@ import (
 // GetTransactions() gin.HandlerFunc
 // AcceptPayment() gin.HandlerFunc
 func TransactionRoutes(incomingRoutes *gin.Engine, transactionController *controllers.TransactionController, customerContoler *controllers.CustomerController) {
-	incomingRoutes.Use(middlewares.AuhthenticateCustomer())
-	incomingRoutes.POST("/transactions/users/topup", transactionController.TopUp())
-	incomingRoutes.GET("transactions/balance", transactionController.CheckBalance())
 	incomingRoutes.GET("/transactions/:merchantId", transactionController.GetTransactions())
 	incomingRoutes.Use(middlewares.VerifyApiKey(customerContoler))
-	incomingRoutes.POST("/transactions/pay", transactionController.AcceptPayment())
-	incomingRoutes.POST("transactions/refund/:txnId", transactionController.Refund())
-	// incomingRoutes.POST("/transactions/theta2theta", transactionController.ThetaTransfer())
+	incomingRoutes.POST("/transactions/refund/:txnId", transactionController.Refund())
+	incomingRoutes.POST("/transactions/theta2theta", transactionController.ThetaTransfer())
 
 }

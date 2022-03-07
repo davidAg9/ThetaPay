@@ -31,6 +31,7 @@ type MomoTransaction struct {
 	Description *string            `bson:"description,omitempty" json:"description,omitempty"`
 	MerchantId  *string            `bson:"merchantId" json:"merchantId,omitempty" `
 	Number      *string            `bson:"number" json:"number" validate:"required" `
+	Pin         *int               `bson:"-" json:"pin" validate:"min=4,max=4"`
 	Created_at  time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty" validate:"date"`
 	Updated_at  time.Time          `bson:"updatedAt,omitempty" json:"-" validate:"date"`
 	Deleted_at  time.Time          `bson:"deletedAt,omitempty" json:"-" validate:"date"`
@@ -63,6 +64,7 @@ type ThetaTransaction struct {
 	Email       *string            `bson:"email" json:"email" validate:"email,required"`
 	Description *string            `bson:"description,omitempty" json:"description,omitempty"`
 	AccountId   *string            `bson:"accountId" json:"accountId" validate:"required"`
+	Pin         *int               `bson:"-" json:"pin,omitempty" validate:"min=4,max=4"`
 	MerchantId  *string            `bson:"merchantId" json:"merchantId" validate:"required" `
 	Created_at  time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty" validate:"date"`
 	Updated_at  time.Time          `bson:"updatedAt,omitempty" json:"-" validate:"date"`
