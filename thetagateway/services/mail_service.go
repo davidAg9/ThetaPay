@@ -21,7 +21,7 @@ func SendSignUpEmail(userMail string) {
 	emailTempLate := `
 	<h1>Click the link below to verify your email</h1>
 	<br>
-	<p>http://localhost:8080/customer/email/[token]</p>
+	<p>http://localhost:8080/customer/email/passHash</p>
 	`
 	email.Body = emailTempLate
 

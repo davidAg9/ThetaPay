@@ -99,6 +99,7 @@ func main() {
 	server.GET("/api", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})
 	})
+
 	routes.AuthCustomerRoutes(server, customerAuthController)
 	routes.CustomerRoutes(server, customerController)
 	routes.AuthUserRoutes(server, userAuthContoller)
