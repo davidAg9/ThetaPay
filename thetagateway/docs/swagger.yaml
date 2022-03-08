@@ -1,3 +1,72 @@
+definitions:
+  models.AccountInfo:
+    properties:
+      accountId:
+        type: string
+      accountType:
+        type: string
+      balance:
+        type: number
+      pincode:
+        type: integer
+    required:
+    - accountId
+    - accountType
+    - balance
+    - pincode
+    type: object
+  models.Customer:
+    properties:
+      accountInfo:
+        $ref: '#/definitions/models.AccountInfo'
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      secretKey:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - accountInfo
+    - createdAt
+    - email
+    - secretKey
+    - updatedAt
+    type: object
+  models.User:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      phoneNumber:
+        type: string
+      role:
+        type: integer
+      updatedAt:
+        type: string
+      userName:
+        type: string
+    required:
+    - createdAt
+    - phoneNumber
+    - role
+    - updatedAt
+    - userName
+    type: object
 info:
   contact:
     email: support@swagger.io
@@ -10,7 +79,73 @@ info:
   termsOfService: http://swagger.io/terms/
   title: ThetaPay API Docs
   version: "1.0"
-paths: {}
+paths:
+  /customers/login:
+    post:
+      consumes:
+      - application/json
+      description: Cutomer Login with Email & Password
+      parameters:
+      - description: Login Body
+        in: body
+        name: Body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Customer'
+      summary: Customer Login
+      tags:
+      - Auth
+  /customers/signup:
+    post:
+      consumes:
+      - application/json
+      description: Signup a new Customer
+      parameters:
+      - description: Signup Body
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Customer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Customer SignUp
+      tags:
+      - Auth
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Users Login with Email & Password
+      parameters:
+      - description: Login Body
+        in: body
+        name: Body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Users Login
+      tags:
+      - Auth
 securityDefinitions:
   ApiKeyAuth:
     in: header

@@ -24,8 +24,8 @@ type Customer struct {
 	Deleted_at   *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty" validate:"date"`
 	Token        *string            `bson:"token" json:"-"`
 	API_KEY      *string            `bson:"secretKey" json:"secretKey"  validate:"required"`
-	Transactions []ThetaTransaction `bson:"transactions,omitempty" json:"transactions,omitempty"`
-	Verified     bool               `bson:"verified" json:"verified,omitempty"`
+	Transactions []ThetaTransaction `bson:"transactions,omitempty" json:"transactions,omitempty" swaggerignore:"true"`
+	Verified     bool               `bson:"verified" json:"verified,omitempty" swaggerignore:"true"`
 }
 
 type AccountInfo struct {

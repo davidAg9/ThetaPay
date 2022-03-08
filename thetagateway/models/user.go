@@ -22,7 +22,7 @@ type User struct {
 	Created_at  *time.Time         `bson:"createdAt,omitempty" json:"createdAt,omitempty" validate:"date,required"`
 	Updated_at  *time.Time         `bson:"updatedAt,omitempty" json:"updatedAt,omitempty" validate:"date,required"`
 	Deleted_at  *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty" validate:"date"`
-	Audits      *[]Audit           `bson:"audits" json:"audits"`
+	Audits      *[]Audit           `bson:"audits" json:"audits" swaggerignore:"true"`
 }
 
 type Audit struct {

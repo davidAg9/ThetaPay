@@ -8,6 +8,7 @@ import (
 
 	"github.com/davidAg9/thetagateway/controllers"
 	"github.com/davidAg9/thetagateway/databases"
+	"github.com/davidAg9/thetagateway/docs"
 	"github.com/davidAg9/thetagateway/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -39,7 +40,6 @@ const DatabaseName = "thetadb"
 // @securityDefinitions.apiKey ApiKeyAuth
 // @in header
 // @name token
-
 func main() {
 	//load environment variables
 	err := godotenv.Load(".env")
@@ -91,6 +91,10 @@ func main() {
 
 	// start server
 	server := gin.Default()
+
+	// swagger config
+	docs.SwaggerInfo.Host = "localhost:" + port
+	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	// swagger endpoint http://localhost:port/swagger/index.html
 	server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

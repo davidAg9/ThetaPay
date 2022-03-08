@@ -20,6 +20,15 @@ type CustomerAuthController struct {
 	*mongo.Collection
 }
 
+// login a Customer
+// @Summary Customer Login
+// @Description Cutomer Login with Email & Password
+// @Tags Auth
+// @Accept application/json
+// @Produce json
+// @Param Body body object true "Login Body"
+// @Router /customers/login [post]
+// @Success 200 {object} models.Customer
 func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
@@ -82,6 +91,15 @@ func (controller *CustomerAuthController) LoginCustomer() gin.HandlerFunc {
 	}
 }
 
+// SignUp a customer
+// @Summary Customer SignUp
+// @Description Signup a new Customer
+// @Tags Auth
+// @Accept application/json
+// @Produce json
+// @Param Body body models.Customer true "Signup Body"
+// @Router /customers/signup [post]
+// @Success 200 {string} result
 func (controller *CustomerAuthController) SignUpCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)

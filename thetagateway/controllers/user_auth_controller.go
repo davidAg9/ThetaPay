@@ -17,6 +17,15 @@ type UserAuthController struct {
 	*mongo.Collection
 }
 
+// login a user
+// @Summary Users Login
+// @Description Users Login with Email & Password
+// @Tags Auth
+// @Accept application/json
+// @Produce json
+// @Param Body body object true "Login Body"
+// @Router /users/login [post]
+// @Success 200 {object} models.User
 func (controller *UserAuthController) LoginUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
